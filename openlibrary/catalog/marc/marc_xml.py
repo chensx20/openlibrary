@@ -115,6 +115,7 @@ class MarcXml(MarcBase):
             yield i.attrib['tag'], i
 
     def read_fields(self, want):
+        """Yield native XML elements; read_decoded_fields wraps data fields."""
         want = set(want)
 
         # http://www.archive.org/download/abridgedacademy00levegoog/abridgedacademy00levegoog_marc.xml

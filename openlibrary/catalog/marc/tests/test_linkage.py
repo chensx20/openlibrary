@@ -3,8 +3,8 @@ from lxml import etree
 from pymarc import Field, Record, record_to_xml
 
 from openlibrary.catalog.marc.marc_binary import MarcBinary
-from openlibrary.catalog.marc.marc_xml import MarcXml
-from openlibrary.catalog.marc.parse import read_author_person, read_publisher, read_title
+from openlibrary.catalog.marc.marc_xml import DataField, MarcXml
+from openlibrary.catalog.marc.parse import read_author_person, read_edition, read_publisher, read_title
 
 
 @pytest.fixture(params=['xml', 'binary'])
@@ -62,3 +62,30 @@ def test_publisher_fallback(make_record):
         ('880', ['6', '260-03/$1', 'a', 'Place', 'b', 'Publisher']),
     ])
     assert read_publisher(rec) == {'publishers': ['Publisher'], 'publish_places': ['Place']}
+
+
+def test_xml_fields_are_decoded_once(monkeypatch):
+    record = Record(force_utf8=True)
+    record.add_field(Field(tag='245', indicators=[' ', ' '], subfields=['6', '880-01', 'a', 'Roman Title']))
+    record.add_field(Field(tag='880', indicators=[' ', ' '], subfields=['6', '245-01', 'a', 'Alternate Title']))
+    rec = MarcXml(etree.fromstring(record_to_xml(record, namespace=True)))
+    decode_field = rec.decode_field
+    decoded_elements = []
+
+    def decode_once(element):
+        assert isinstance(element, etree._Element)
+        decoded_elements.append(element)
+        return decode_field(element)
+
+    monkeypatch.setattr(rec, 'decode_field', decode_once)
+    assert isinstance(next(rec.read_fields(['245']))[1], etree._Element)
+    rec.build_fields(['245'])
+    assert len(decoded_elements) == 1
+    assert isinstance(rec.get_fields('245')[0], DataField)
+    assert isinstance(rec.get_fields('245')[0], DataField)
+    assert len(decoded_elements) == 1
+    assert isinstance(rec.get_linkage('245', '880-01'), DataField)
+    assert len(decoded_elements) == 2
+    edition = read_edition(rec)
+    assert edition['title'] == 'Alternate Title'
+    assert edition['other_titles'] == ['Roman Title']
