@@ -57,7 +57,9 @@ class ListRecord:
             'seeds': [],
         }
         if data := web.data():
-            if web.ctx.env.get('CONTENT_TYPE') == 'application/json':
+            content_type = web.ctx.env.get('CONTENT_TYPE', '')
+            media_type = content_type.partition(';')[0].strip().lower()
+            if media_type == 'application/json':
                 submitted = json.loads(data)
             else:
                 form_data = {

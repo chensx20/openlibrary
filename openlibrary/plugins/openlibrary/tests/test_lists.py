@@ -84,7 +84,11 @@ class TestListRecord:
 
     def test_from_input_accepts_scalar_seed_from_json_body(self):
         with (
-            patch('web.ctx.env', {'CONTENT_TYPE': 'application/json'}, create=True),
+            patch(
+                'web.ctx.env',
+                {'CONTENT_TYPE': 'application/json; charset=utf-8'},
+                create=True,
+            ),
             patch('web.data', return_value=b'{"seeds":"OL1M"}'),
             patch('web.input') as mock_input,
         ):
