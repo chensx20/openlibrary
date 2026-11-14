@@ -170,20 +170,6 @@ class MarcBinary(MarcBase):
             else:
                 yield tag, BinaryDataField(self, line)
 
-    def get_linkage(self, original: str, link: str) -> BinaryDataField | None:
-        """
-        :param original str: The original field e.g. '245'
-        :param link str: The linkage {original}$6 value e.g. '880-01'
-        :rtype: BinaryDataField | None
-        :return: alternate script field (880) corresponding to original or None
-        """
-        linkages = self.read_fields(['880'])
-        target = link.replace('880', original)
-        for tag, f in linkages:
-            if f.get_subfield_values(['6'])[0].startswith(target):
-                return f
-        return None
-
     def get_all_tag_lines(self):
         for line in self.iter_directory():
             yield (line[:3].decode(), self.get_tag_line(line))

@@ -82,8 +82,7 @@ subject_fields = {'600', '610', '611', '630', '648', '650', '651', '662'}
 
 def read_subjects(rec):
     subjects = defaultdict(lambda: defaultdict(int))
-    for tag, field in rec.read_fields(subject_fields):
-        f = rec.decode_field(field)
+    for tag, f in rec.read_decoded_fields(subject_fields):
         aspects = find_aspects(f)
 
         if tag == '600':  # people

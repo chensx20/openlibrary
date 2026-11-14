@@ -358,7 +358,7 @@ def read_publisher(rec):
     fields = (
         rec.get_fields('260')
         or rec.get_fields('264')[:1]
-        or [rec.get_linkage('260', '880')]
+        or ([linked] if (linked := rec.get_linked_field('260')) else [])
     )
     if not fields:
         return
@@ -590,8 +590,7 @@ def read_contributions(rec):
             skip_authors.add(tuple(f.get_all_subfields()))
 
     if not skip_authors:
-        for tag, f in rec.read_fields(['700', '710', '711', '720']):
-            f = rec.decode_field(f)
+        for tag, f in rec.read_decoded_fields(['700', '710', '711', '720']):
             if tag in ('700', '720'):
                 if 'authors' not in ret or last_name_in_245c(rec, f):
                     ret.setdefault('authors', []).append(read_author_person(f, tag=tag))
@@ -617,9 +616,9 @@ def read_contributions(rec):
                 skip_authors.add(tuple(f.get_subfields(want[tag])))
                 break
 
-    for tag, f in rec.read_fields(['700', '710', '711', '720']):
+    for tag, f in rec.read_decoded_fields(['700', '710', '711', '720']):
         sub = want[tag]
-        cur = tuple(rec.decode_field(f).get_subfields(sub))
+        cur = tuple(f.get_subfields(sub))
         if tuple(cur) in skip_authors:
             continue
         name = remove_trailing_dot(' '.join(strip_foc(i[1]) for i in cur).strip(','))
