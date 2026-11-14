@@ -358,7 +358,7 @@ def read_publisher(rec):
     fields = (
         rec.get_fields('260')
         or rec.get_fields('264')[:1]
-        or [rec.get_linkage('260', '880')]
+        or ([linked] if (linked := rec.get_linked_field('260')) else [])
     )
     if not fields:
         return
