@@ -4,6 +4,7 @@ from dataclasses import dataclass, field
 import json
 import random
 from typing import TypedDict
+from urllib.parse import parse_qs
 import web
 
 from infogami.utils import delegate
@@ -49,18 +50,36 @@ class ListRecord:
 
     @staticmethod
     def from_input():
-        i = utils.unflatten(
-            web.input(
-                key=None,
-                name='',
-                description='',
-                seeds=[],
-            )
-        )
+        defaults = {
+            'key': None,
+            'name': '',
+            'description': '',
+            'seeds': [],
+        }
+        if data := web.data():
+            content_type = web.ctx.env.get('CONTENT_TYPE', '')
+            media_type = content_type.partition(';')[0].strip().lower()
+            if media_type == 'application/json':
+                submitted = json.loads(data)
+            else:
+                form_data = {
+                    key: (
+                        values
+                        if key == 'seeds' and len(values) > 1
+                        else values[0]
+                    )
+                    for key, values in parse_qs(bytes.decode(data)).items()
+                }
+                submitted = utils.unflatten(form_data)
+            i = defaults | submitted
+        else:
+            i = defaults | utils.unflatten(web.input())
+
+        seed_values = i['seeds'] if isinstance(i['seeds'], list) else [i['seeds']]
 
         normalized_seeds = [
             ListRecord.normalize_input_seed(seed)
-            for seed_list in i.seeds
+            for seed_list in seed_values
             for seed in (
                 seed_list.split(',') if isinstance(seed_list, str) else [seed_list]
             )
@@ -71,9 +90,9 @@ class ListRecord:
             if seed and (isinstance(seed, str) or seed.get('key'))
         ]
         return ListRecord(
-            key=i.key,
-            name=i.name,
-            description=i.description,
+            key=i['key'],
+            name=i['name'],
+            description=i['description'],
             seeds=normalized_seeds,
         )
 
