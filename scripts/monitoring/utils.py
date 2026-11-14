@@ -1,4 +1,3 @@
-import fnmatch
 import os
 import subprocess
 import typing
@@ -99,11 +98,11 @@ def bash_run(cmd: str, sources: list[str] | None = None, capture_output=False):
     )
 
 
-def limit_server(allowed_servers: list[str], scheduler: BlockingScheduler):
+def limit_server(allowed_servers: list[str], scheduler: BlockingScheduler, trigger, **trigger_args):
     """
-    Decorate that un-registers a job if the server does not match any of the allowed servers.
+    Register a job only when the server matches an allowed server.
 
-    :param allowed_servers: List of allowed servers. Can include `*` for globbing, eg "ol-web*"
+    :param allowed_servers: Exact server names or names ending in `*` for prefix matching.
     """
 
     def decorator(func):
@@ -113,8 +112,11 @@ def limit_server(allowed_servers: list[str], scheduler: BlockingScheduler):
         if hostname.endswith(".us.archive.org"):
             server = hostname.split(".")[0]
 
-        if not any(fnmatch.fnmatch(server, pattern) for pattern in allowed_servers):
-            scheduler.remove_job(func.__name__)
+        if any(
+            server.startswith(pattern[:-1]) if pattern.endswith("*") else server == pattern
+            for pattern in allowed_servers
+        ):
+            scheduler.scheduled_job(trigger, **trigger_args)(func)
         return func
 
     return decorator

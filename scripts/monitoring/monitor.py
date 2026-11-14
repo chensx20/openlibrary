@@ -16,15 +16,13 @@ SERVER = HOST.split(".")[0]  # eg "ol-www0"
 scheduler = OlBlockingScheduler()
 
 
-@limit_server(["ol-web*", "ol-covers0"], scheduler)
-@scheduler.scheduled_job('interval', seconds=60)
+@limit_server(["ol-web*", "ol-covers0"], scheduler, "interval", seconds=60)
 def log_workers_cur_fn():
     """Logs the state of the gunicorn workers."""
     bash_run(f"log_workers_cur_fn stats.{SERVER}.workers.cur_fn", sources=["utils.sh"])
 
 
-@limit_server(["ol-www0", "ol-covers0"], scheduler)
-@scheduler.scheduled_job('interval', seconds=60)
+@limit_server(["ol-www0", "ol-covers0"], scheduler, "interval", seconds=60)
 def log_recent_bot_traffic():
     """Logs the state of the gunicorn workers."""
     match SERVER:
@@ -43,8 +41,7 @@ def log_recent_bot_traffic():
     )
 
 
-@limit_server(["ol-www0", "ol-covers0"], scheduler)
-@scheduler.scheduled_job('interval', seconds=60)
+@limit_server(["ol-www0", "ol-covers0"], scheduler, "interval", seconds=60)
 def log_recent_http_statuses():
     """Logs the recent HTTP statuses."""
     match SERVER:
@@ -63,8 +60,7 @@ def log_recent_http_statuses():
     )
 
 
-@limit_server(["ol-www0", "ol-covers0"], scheduler)
-@scheduler.scheduled_job('interval', seconds=60)
+@limit_server(["ol-www0", "ol-covers0"], scheduler, "interval", seconds=60)
 def log_top_ip_counts():
     """Logs the recent HTTP statuses."""
     match SERVER:
